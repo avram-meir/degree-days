@@ -69,30 +69,30 @@ my %climdivs = map { $_ => 1 } @climdivs;
 # --- Override get_data method ---
 
 sub get_data {
-	my $self         = shift;
-	confess "Date argument required" unless @_;
-	$self->{MISSING} = -9999.;
-	my $day          = shift;
-	confess "Date argument is not of type Date::Manip::Date" unless(blessed($day) and $day->isa("Date::Manip::Date"));
-	confess "No archive found" unless(defined $self->{ARCHIVE});
-	my $archive_file = $day->printf($self->{ARCHIVE});
-	confess "Archive file $archive_file not found" unless(-e $archive_file);
-	open(ARCHIVE,'<',$archive_file) or confess "Could not open $archive_file for reading";
-	my @data         = <ARCHIVE>; shift @data; chomp @data;
-	close(ARCHIVE);
-	my $data         = {};
+    my $self         = shift;
+    confess "Date argument required" unless @_;
+    $self->{MISSING} = -9999.;
+    my $day          = shift;
+    confess "Date argument is not of type Date::Manip::Date" unless(blessed($day) and $day->isa("Date::Manip::Date"));
+    confess "No archive found" unless(defined $self->{ARCHIVE});
+    my $archive_file = $day->printf($self->{ARCHIVE});
+    confess "Archive file $archive_file not found" unless(-e $archive_file);
+    open(ARCHIVE,'<',$archive_file) or confess "Could not open $archive_file for reading";
+    my @data         = <ARCHIVE>; shift @data; chomp @data;
+    close(ARCHIVE);
+    my $data         = {};
 
-	LINE: foreach my $line (@data) {
-		my($key,$value) = split(/\|/,$line);
-		next LINE unless(exists($climdivs{$key}));
-		$data->{$key}   = $value;
-	}
+    LINE: foreach my $line (@data) {
+        my($key,$value) = split(/\|/,$line);
+        next LINE unless(exists($climdivs{$key}));
+        $data->{$key}   = $value;
+    }
 
-	foreach my $climdiv (@climdivs) {
-		carp $day->printf("WARNING: No data found for climate division $climdiv on %Y/%m/%d") unless($data->{$climdiv});
-	}
+    foreach my $climdiv (@climdivs) {
+        carp $day->printf("WARNING: No data found for climate division $climdiv on %Y/%m/%d") unless($data->{$climdiv});
+    }
 
-	return($data);
+    return($data);
 }
 
 1;

@@ -53,30 +53,30 @@ my %allowed_vars = (
 # --- Methods ---
 
 sub new {
-	my $class = shift;
-	my $self  = {};
-	$self->{ARCHIVE} = undef;
-	$self->{MISSING} = -9999.0;
-	bless($self,$class);
-	return $self;
+    my $class = shift;
+    my $self  = {};
+    $self->{ARCHIVE} = undef;
+    $self->{MISSING} = -9999.0;
+    bless($self,$class);
+    return $self;
 }
 
 sub set_missing_val {
-	my $self         = shift;
-	unless(@_) { carp "Argument required"; return 1; }
-	my $missing_val  = shift;
-	$self->{MISSING} = $missing_val;
-	return 0;
+    my $self         = shift;
+    unless(@_) { carp "Argument required"; return 1; }
+    my $missing_val  = shift;
+    $self->{MISSING} = $missing_val;
+    return 0;
 }
 
 sub get_data {
 
-	# This method does nothing and needs to be overriden by the inheriting classes
+    # This method does nothing and needs to be overriden by the inheriting classes
 
-	my $self           = shift;
-	my $date_obj       = undef;
-	if(@_) { $date_obj = shift; }
-	return 0;
+    my $self           = shift;
+    my $date_obj       = undef;
+    if(@_) { $date_obj = shift; }
+    return 0;
 }
 
 1;

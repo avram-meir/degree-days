@@ -94,94 +94,94 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 use List::Util qw(first);
 
 sub new {
-	my $class        = shift;
-	my $self         = {};
-	$self->{BASE}    = 65;
-	$self->{CEIL}    = 86;
-	$self->{MISSING} = -999.0;
+    my $class        = shift;
+    my $self         = {};
+    $self->{BASE}    = 65;
+    $self->{CEIL}    = 86;
+    $self->{MISSING} = -999.0;
 
-	if(@_) {
-		my $base         = shift;
-		confess "BASE argument is invalid" unless(looks_like_number($base));
-		$self->{BASE}    = $base;
-	}
+    if(@_) {
+        my $base         = shift;
+        confess "BASE argument is invalid" unless(looks_like_number($base));
+        $self->{BASE}    = $base;
+    }
 
-	if(@_) {
-		my $ceil         = shift;
-		confess "CEIL argument is invalid" unless(looks_like_number($ceil));
-		$self->{CEIL}    = $ceil;
-	}
+    if(@_) {
+        my $ceil         = shift;
+        confess "CEIL argument is invalid" unless(looks_like_number($ceil));
+        $self->{CEIL}    = $ceil;
+    }
 
-	if(@_) {
-		my $missing      = shift;
-		confess "MISSING argument is invalid" unless(looks_like_number($missing));
-		$self->{MISSING} = $missing;
-	}
+    if(@_) {
+        my $missing      = shift;
+        confess "MISSING argument is invalid" unless(looks_like_number($missing));
+        $self->{MISSING} = $missing;
+    }
 
-	bless($self,$class);
-	return $self;
+    bless($self,$class);
+    return $self;
 }
 
 sub set_base {
-	my $self         = shift;
-	confess "Argument required" unless @_;
-	my $base         = shift;
-	confess "BASE argument is invalid" unless(looks_like_number($base));
-	$self->{BASE}    = $base;
-	return 0;
+    my $self         = shift;
+    confess "Argument required" unless @_;
+    my $base         = shift;
+    confess "BASE argument is invalid" unless(looks_like_number($base));
+    $self->{BASE}    = $base;
+    return 0;
 }
 
 sub set_ceil {
-	my $self         = shift;
-	confess "Argument required" unless @_;
-	my $ceil         = shift;
-	confess "CEIL argument is invalid" unless(looks_like_number($ceil));
-	$self->{CEIL}    = $ceil;
-	return 0;
+    my $self         = shift;
+    confess "Argument required" unless @_;
+    my $ceil         = shift;
+    confess "CEIL argument is invalid" unless(looks_like_number($ceil));
+    $self->{CEIL}    = $ceil;
+    return 0;
 }
 
 sub set_missing {
-	my $self         = shift;
-	confess "Argument required" unless @_;
-	my $missing      = shift;
-	confess "MISSING argument is invalid" unless(looks_like_number($missing));
-	$self->{MISSING} = $missing;
-	return 0;
+    my $self         = shift;
+    confess "Argument required" unless @_;
+    my $missing      = shift;
+    confess "MISSING argument is invalid" unless(looks_like_number($missing));
+    $self->{MISSING} = $missing;
+    return 0;
 }
 
 sub cooling {
-	my $self = shift;
-	confess "TMAX, TMIN arguments required" unless(@_ >= 2);
-	my $tmax = shift;
-	my $tmin = shift;
-	if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
-	my $cdd  = (($tmax + $tmin)/2) - $self->{BASE};
-	if($cdd <= 0) { return 0;    }
-	else          { return $cdd; }
+    my $self = shift;
+    confess "TMAX, TMIN arguments required" unless(@_ >= 2);
+    my $tmax = shift;
+    my $tmin = shift;
+    if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
+    my $cdd  = (($tmax + $tmin)/2) - $self->{BASE};
+    if($cdd <= 0) { return 0;    }
+    else          { return $cdd; }
 }
 
 sub growing {
-	my $self = shift;
-	confess "TMAX, TMIN arguments required" unless(@_ >= 2);
-	my $tmax = shift;
-	my $tmin = shift;
-	if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
-	if($tmax > $self->{CEIL}) { $tmax = $self->{CEIL}; }
-	if($tmin > $self->{CEIL}) { $tmin = $self->{CEIL}; }
-	my $gdd  = (($tmax + $tmin)/2) - $self->{BASE};
-	if($gdd <= 0) { return 0;    }
-	else          { return $gdd; }
+    my $self = shift;
+    confess "TMAX, TMIN arguments required" unless(@_ >= 2);
+    my $tmax = shift;
+    my $tmin = shift;
+    if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
+    if($tmax > $self->{CEIL}) { $tmax = $self->{CEIL}; }
+    if($tmin > $self->{CEIL}) { $tmin = $self->{CEIL}; }
+    my $gdd  = (($tmax + $tmin)/2) - $self->{BASE};
+    if($gdd <= 0) { return 0;    }
+    else          { return $gdd; }
 }
 
 sub heating {
-	my $self = shift;
-	confess "TMAX, TMIN arguments required" unless(@_ >= 2);
-	my $tmax = shift;
-	my $tmin = shift;
-	if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
-	my $hdd  = $self->{BASE} - (($tmax + $tmin)/2);
-	if($hdd <= 0) { return 0;    }
-	else          { return $hdd; }
+    my $self = shift;
+    confess "TMAX, TMIN arguments required" unless(@_ >= 2);
+    my $tmax = shift;
+    my $tmin = shift;
+    if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
+    my $hdd  = $self->{BASE} - (($tmax + $tmin)/2);
+    if($hdd <= 0) { return 0;    }
+    else          { return $hdd; }
 }
 
 1;
