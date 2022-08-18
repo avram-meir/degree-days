@@ -74,7 +74,7 @@ sub get_min_data {
     return &_get_data($date,$self->{TMIN_ARCHIVE},$self->{MISSING});
 }
 
-sub get_data {
+sub _get_data {
     my $date    = shift;
     my $archive = shift;
     my $missing = shift;
