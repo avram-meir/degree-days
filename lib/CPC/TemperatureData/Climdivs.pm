@@ -77,7 +77,7 @@ sub get_min_data {
 sub _get_data {
     my $date    = shift;
     my $archive = shift;
-    my $missing = shift;
+    my $missing = -9999;
     confess "No archive found (did you forget to set it using set_max_archive()?)" unless(defined $archive);
     confess "Date argument is not of type Date::Manip::Date" unless(blessed($day) and $day->isa("Date::Manip::Date"));
     my $dataset = $day->printf($archive);
