@@ -55,6 +55,7 @@ use File::Copy qw(copy move);
 use File::Path qw(mkpath);
 use Scalar::Util qw(blessed looks_like_number openhandle);
 use Pod::Usage;
+use Text::ParseWords;
 
 # --- External CPAN packages ---
 
@@ -128,21 +129,35 @@ print "Running calculate-degree-days for " . $day->printf("%Y%m%d") . " using pa
 
 my $config    = Config::Simple->new($config_file)->vars();
 my $data_type = $config->{'archive.type'};
+
+# --- Only allow data types we can handle ---
+
 unless($data_type =~ /cadb/i or $data_type =~ /climdivs/i) { die "Data type $type is unsupported - exiting"; }
+
+# --- Get location information ---
+
 my $locations = $config->{'archive.location_list'};
+my @location_ids;
 open(LOCATIONS,'<',$locations) or die "Could not open $locations - $! - exiting";
-
-# Do stuff with locations here?
-
+my @locations = <LOCATIONS>; chomp @locations;
 close(LOCATIONS);
 
-my($temperatures);
+foreach my $location (@locations) {
+    my @location_info = Text::ParseWords::parse_line(',', 0, $location);
+    push(@location_ids,$location_info[0]);
+}
+
+# --- Set up CPC::TemperatureData object ---
+
+my($temperatures,$missing_val);
 
 if($data_type =~ /cadb/i) {
     $temperatures = CPC::TemperatureData::CADB->new();
+    $missing_val  = -99999;
 }
 elsif($data_type =~ /climdivs/i) {
     $temperatures = CPC::TemperatureData::Climdivs->new();
+    $missing_val  = -9999;
 }
 else {
     die "Tell the software dev to add support for this data type - exiting";
@@ -155,12 +170,40 @@ $temperatures->set_min_archive($config->{'archive.min'});
 my $tmax = $temperatures->get_max_data($day);
 my $tmin = $temperatures->get_min_data($day);
 
+# --- Set up output information and open output files ---
 
+my %degree_day_types;
+my %output_FH;
+my %output_headers;
+
+my %degree_day_subs = (
+    cooling => \&cooling,
+    growing => \&growing,
+    heating => \&heating,
+);
+
+foreach my $dd qw(cooling growing heating) {
+
+    if(defined $config->{"output.$dd"}) {
+        $degree_day_types{$dd} = $day->printf($config->{"output.$dd"});
+        $degree_day_FH{$dd}    = uc($dd);
+        if(defined $config->{"output.$dd\_header"}) { $output_headers{$dd} = $config->{"output.$dd\_header"}; }
+        else { $output_headers{$dd} = ucfirst($dd) . " Degree Days"; }
+        open($degree_day_FH{$dd},'>',$degree_day_types{$dd}) or die "Could not open " . $degree_day_types{$dd} . " for writing - $! - exiting";
+        print $degree_day_FH{$dd} $output_headers{$dd} . "\n";
+    }
+
+}
 
 # --- Calculate and write out degree days data ---
 
+foreach my $location (@location_ids) {
 
+    foreach my $dd (keys %degree_day_types) {
+        
+    }
 
+}
 
 # --- End of script ---
 
