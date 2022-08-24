@@ -15,7 +15,7 @@ DegreeDays - Degree days calculator for the degree-days application
  my $dd       = CPC::DegreeDays->new();
  my $hdd      = $dd->heating($tmax,$tmin);
  $dd->set_base(50);
- $dd->set_base(86);
+ $dd->set_ceil(86);
  my $gdd_corn = $dd->growing($tmax,$tmin);
 
 =head1 DESCRIPTION
@@ -39,29 +39,32 @@ A heating degree day (HDD) is an index demonstrated to reflect energy demand for
 =head2 Constructor new
 
  my $dd1 = DegreeDays->new();
- my $dd2 = DegreeDays->new($base,$ceil,$missing_value);
+ my $dd2 = DegreeDays->new($base,$ceil,$missing);
 
 Returns a DegreeDays object (a reference blessed into the DegreeDays package). The base, ceiling, and missing values can be set upon creation of the object by passing them as arguments.
 
-Default values are base = 65, ceil = 86, and missing_value = -999.0.
+Default values are base = 65, ceil = 86, and missing_value = -999.
 
-=head2 set_base
+=head2 base
 
- $dd->set_base($base);
+ $dd->base($base);
+ $base = $dd->base();
 
-Set a new base value.
+Sets the base to the argument value, if supplied, and returns the base value.
 
-=head2 set_ceil
+=head2 ceil
 
- $dd->set_ceil($ceil);
+ $dd->ceil($ceil);
+ $ceil = $dd->ceil();
 
-Set a new ceiling value.
+Sets the ceil to the argument value, if supplied, and returns the ceil value.
 
-=head2 set_missing
+=head2 missing
 
- $dd->set_missing($missing_value);
+ $dd->missing($missing);
+ $missing = $dd->missing();
 
-Set a new missing value.
+Sets the missing value to the argument, if supplied, and returns the missing value.
 
 =head2 cooling
 
@@ -122,31 +125,41 @@ sub new {
     return $self;
 }
 
-sub set_base {
-    my $self         = shift;
-    confess "Argument required" unless @_;
-    my $base         = shift;
-    confess "BASE argument is invalid" unless(looks_like_number($base));
-    $self->{BASE}    = $base;
-    return 0;
+sub base {
+    my $self      = shift;
+
+    if(@_) {
+        my $base  = shift;
+        if(looks_like_number($base)) { $self->{BASE} = $base; }
+        else                         { carp "BASE value not changed - invalid argument"; }
+    }
+
+    if($self->{BASE} >= $self->{CEIL}) { carp "BASE >= CEIL - no growing degree days can be counted"; }
+    return $self->{BASE};
 }
 
-sub set_ceil {
-    my $self         = shift;
-    confess "Argument required" unless @_;
-    my $ceil         = shift;
-    confess "CEIL argument is invalid" unless(looks_like_number($ceil));
-    $self->{CEIL}    = $ceil;
-    return 0;
+sub ceil {
+    my $self      = shift;
+    
+    if(@_) {
+        my $ceil  = shift;
+        if(looks_like_number($ceil)) { $self->{CEIL} = $ceil; }
+        else                         { carp "CEIL value not changed - invalid argument"; }
+    }
+    
+    if($self->{BASE} >= $self->{CEIL}) { carp "BASE >= CEIL - no growing degree days can be counted"; }
+    return $self->{CEIL};
 }
 
-sub set_missing {
-    my $self         = shift;
-    confess "Argument required" unless @_;
-    my $missing      = shift;
-    confess "MISSING argument is invalid" unless(looks_like_number($missing));
-    $self->{MISSING} = $missing;
-    return 0;
+sub missing {
+    my $self      = shift;
+    
+    if(@_) {
+        my $miss         = shift;
+        $self->{MISSING} = $miss;
+    }
+    
+    return $self->{MISSING};
 }
 
 sub cooling {
