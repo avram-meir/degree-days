@@ -134,8 +134,8 @@ sub get_data {
 
             foreach my $f (@cadb_vars) {
                 $val->{$f} = shift @vals;
-                if(not looks_like_number($val->{$f}) { $val->{$f} = $missing_out; }
-                if($val->{$f} == $missing_in)        { $val->{$f} = $missing_out; }
+                if(not looks_like_number($val->{$f})) { $val->{$f} = $missing_out; }
+                if($val->{$f} == $missing_in)         { $val->{$f} = $missing_out; }
             }
 
         }
@@ -147,7 +147,7 @@ sub get_data {
     else {
         my %loc_data;
         my %data = %{$data};
-        @loc_data{@{$self->{LOCATIONS}}} = @data{@{$self->{LOCATIONS}}}
+        @loc_data{@{$self->{LOCATIONS}}} = @data{@{$self->{LOCATIONS}}};
         return \%loc_data;
     }
 

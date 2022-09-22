@@ -59,6 +59,11 @@ sub get_missing {
     return $self->{MISSING};
 }
 
+sub get_locations {
+    my $self = shift;
+    return \@climdivs;
+}
+
 sub get_data {
     my $self        = shift;
     my $missing_in  = -999;
@@ -87,33 +92,14 @@ sub get_data {
 
     LINE: foreach my $line (@contents) {
         my($id,$val) = split(',',$line);
-        next LINE unless exists($climdivs{$id});
+        next LINE unless exists($climdivs[$id]);
         if(not looks_like_number($val)) { $val = $missing_out; }
         if($val == $missing_in)         { $val = $missing_out; }
         $data->{$id} = $val;
     }  # :LINE
 
     foreach my $cd (@climdivs) {
-        unless(defined $data->{$cd}) { $data->{$climdiv} = $missing_out; }
-    }
-
-    return $data;
-}
-
-
-sub get_data {
-    my $self  = shift;
-    my $field = undef;
-    my $data  = {};
-
-    LINE: foreach my $line (@{$self->{DAILY}}) {
-        my($id,$value) = split(/,/,$line);
-        next LINE unless exists($climdivs{$id});
-        $data->{$id}   = $value;
-    }  # :LINE
-
-    foreach my $climdiv (@climdivs) {
-        unless(defined $data->{$climdiv}) { $data->{$climdiv} = -999; }
+        unless(defined $data->{$cd}) { $data->{$cd} = $missing_out; }
     }
 
     return $data;
