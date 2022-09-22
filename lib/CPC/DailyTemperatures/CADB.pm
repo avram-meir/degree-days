@@ -54,7 +54,7 @@ sub set_locations {
         return undef;
     }
 
-    $self->{LOCATIONS} = ${@_};
+    $self->{LOCATIONS} = \@_;
     return 1;
 }
 

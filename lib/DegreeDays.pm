@@ -170,7 +170,7 @@ sub cooling {
     if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
     my $cdd  = (($tmax + $tmin)/2) - $self->{BASE};
     if($cdd <= 0) { return 0;    }
-    else          { return $cdd; }
+    else          { return int($cdd+0.5); }
 }
 
 sub growing {
@@ -183,7 +183,7 @@ sub growing {
     if($tmin > $self->{CEIL}) { $tmin = $self->{CEIL}; }
     my $gdd  = (($tmax + $tmin)/2) - $self->{BASE};
     if($gdd <= 0) { return 0;    }
-    else          { return $gdd; }
+    else          { return int($gdd+0.5); }
 }
 
 sub heating {
@@ -194,7 +194,7 @@ sub heating {
     if($tmax == $self->{MISSING} or $tmin == $self->{MISSING}) { return $self->{MISSING}; }
     my $hdd  = $self->{BASE} - (($tmax + $tmin)/2);
     if($hdd <= 0) { return 0;    }
-    else          { return $hdd; }
+    else          { return int($hdd+0.5); }
 }
 
 1;

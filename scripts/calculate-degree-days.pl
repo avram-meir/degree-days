@@ -149,7 +149,7 @@ if($stations) {
         close(STATIONS);
 
         foreach my $station (@stations_contents) {
-            my @station_info = Text::Parsewords::parse_line(',', 0, $station);
+            my @station_info = Text::ParseWords::parse_line(',', 0, $station);
             push(@station_ids,$station_info[0]);
         }
 
@@ -288,6 +288,7 @@ sub parse_param {
         APP_PATH => "$script_path..",
         DATA_IN  => $ENV{DATA_IN},
         DATA_OUT => $ENV{DATA_OUT},
+        FTP_IN   => $ENV{FTP_IN},
     );
 
     my $param_parsed = $param;
