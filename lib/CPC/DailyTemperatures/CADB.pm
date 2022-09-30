@@ -54,7 +54,8 @@ sub set_locations {
         return undef;
     }
 
-    $self->{LOCATIONS} = \@_;
+    my @locations = @_;
+    $self->{LOCATIONS} = \@locations;
     return 1;
 }
 
@@ -102,7 +103,7 @@ sub get_data {
     my $field = undef;
 
     if(@_) {
-        my $field = shift;
+        $field = shift;
 
         unless(exists $cadb_vars{$field}) {
             carp "$field is not a known CADB variable - returning everything";
@@ -145,10 +146,10 @@ sub get_data {
 
     if(not @{$self->{LOCATIONS}}) { return $data; }
     else {
-        my %loc_data;
-        my %data = %{$data};
-        @loc_data{@{$self->{LOCATIONS}}} = @data{@{$self->{LOCATIONS}}};
-        return \%loc_data;
+        my %locations = map { $_ => 1 } @{$self->{LOCATIONS}};
+        foreach my $id (keys %{$data}) { unless(exists($locations{$id})) { delete($data->{$id}); } }
+        foreach my $id (@{$self->{LOCATIONS}}) { unless(exists($data->{$id})) { $data->{$id} = $missing_out; } }
+        return $data;
     }
 
 }

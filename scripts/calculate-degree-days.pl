@@ -149,6 +149,7 @@ if($stations) {
         close(STATIONS);
 
         foreach my $station (@stations_contents) {
+            $station =~ s/\'//g;
             my @station_info = Text::ParseWords::parse_line(',', 0, $station);
             push(@station_ids,$station_info[0]);
         }
@@ -172,6 +173,13 @@ if($cd_tmax) { $climdivs_tmax = $cd_data->get_data($cd_tmax);        }
 if($cd_tmin) { $climdivs_tmin = $cd_data->get_data($cd_tmin);        }
 if($st_temp) { $stations_tmax = $st_data->get_data($st_temp,'tmax');
                $stations_tmin = $st_data->get_data($st_temp,'tmin'); }
+
+# --- Convert CADB temperatures to Fahrenheit ---
+
+if($st_temp) {
+    foreach my $stn (keys $stations_tmax) { unless($stations_tmax->{$stn} == -999) { $stations_tmax->{$stn} = ($stations_tmax->{$stn}*9/5) + 32; } }
+    foreach my $stn (keys $stations_tmin) { unless($stations_tmin->{$stn} == -999) { $stations_tmin->{$stn} = ($stations_tmin->{$stn}*9/5) + 32; } }
+}
 
 # --- Calculate degree days ---
 
