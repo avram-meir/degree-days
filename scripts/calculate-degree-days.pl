@@ -177,8 +177,8 @@ if($st_temp) { $stations_tmax = $st_data->get_data($st_temp,'tmax');
 # --- Convert CADB temperatures to Fahrenheit ---
 
 if($st_temp) {
-    foreach my $stn (keys $stations_tmax) { unless($stations_tmax->{$stn} == -999) { $stations_tmax->{$stn} = ($stations_tmax->{$stn}*9/5) + 32; } }
-    foreach my $stn (keys $stations_tmin) { unless($stations_tmin->{$stn} == -999) { $stations_tmin->{$stn} = ($stations_tmin->{$stn}*9/5) + 32; } }
+    foreach my $stn (keys %{$stations_tmax}) { unless($stations_tmax->{$stn} == -999) { $stations_tmax->{$stn} = ($stations_tmax->{$stn}*9/5) + 32; } }
+    foreach my $stn (keys %{$stations_tmin}) { unless($stations_tmin->{$stn} == -999) { $stations_tmin->{$stn} = ($stations_tmin->{$stn}*9/5) + 32; } }
 }
 
 # --- Calculate degree days ---
