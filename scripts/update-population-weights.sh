@@ -55,6 +55,7 @@ printf "Year is : %s\n" $year
 
 climdivspops="../populations/${year}/climate_divisions_${year}.csv"
 statespops=(
+    "../populations/${year}/population_${year}.csv"
     "../populations/${year}/all-households_${year}.csv"
     "../populations/${year}/bottled-tank-lp-gas_${year}.csv"
     "../populations/${year}/coal-coke_${year}.csv"
@@ -69,6 +70,7 @@ statespops=(
 
 climdivswts="${output}/climate_divisons.csv"
 censuswts=(
+    "${output}/population_census.csv"
     "${output}/all-households_census.csv"
     "${output}/bottled-tank-lp-gas_census.csv"
     "${output}/coal-coke_census.csv"
@@ -81,6 +83,7 @@ censuswts=(
     "${output}/wood_census.csv"
 )
 conuswts=(
+    "${output}/population_conus.csv"
     "${output}/all-households_conus.csv"
     "${output}/bottled-tank-lp-gas_conus.csv"
     "${output}/coal-coke_conus.csv"
@@ -93,6 +96,7 @@ conuswts=(
     "${output}/wood_conus.csv"
 )
 uswts=(
+    "${output}/population_us.csv"
     "${output}/all-households_us.csv"
     "${output}/bottled-tank-lp-gas_us.csv"
     "${output}/coal-coke_us.csv"
