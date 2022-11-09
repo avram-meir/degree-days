@@ -178,8 +178,100 @@ foreach my $st (@us_states) {
     print OUTPUT join(',',$st,int($dd_states{$st}+0.5))."\n";
 }
 
+# --- Get Census division, CONUS, and US weighted degree days ---
+
+my %census_regions = split(' ', q(1 CT,ME,MA,NH,RI,VT 2 NJ,NY,PA 3 IN,IL,MI,OH,WI 4 IA,KS,MN,MO,NE,ND,SD 5 DE,FL,GA,MD,NC,SC,VA,WV 6 AL,KY,MS,TN 7 AR,LA,OK,TX 8 AZ,CO,ID,NM,MT,VT,UT,NV,WY 9 CA,OR,WA));
+my %census_names   = (
+    1 => 'NEW ENGLAND',
+    2 => 'MIDDLE ATLANTIC',
+    3 => 'E N CENTRAL',
+    4 => 'W N CENTRAL',
+    5 => 'SOUTH ATLANTIC',
+    6 => 'E S CENTRAL',
+    7 => 'W S CENTRAL',
+    8 => 'MOUNTAIN',
+    9 => 'PACIFIC',
+);
+
+my $n = 0;
+
+while(exists $weights->{"states$n.name"}) {
+
+    # --- Get the weights needed for Census Divisions, CONUS, and US degree days ---
+
+    my $censuswts_file = "../weights/".$weights->{"states$n.census"};
+    open(CENSUSWTS,'<',$censuswts_file) or die "Could not open $censuswts_file for reading - $! - exiting";
+    my @censuswts = <CENSUSWTS>; chomp @censuswts;
+    close(CENSUSWTS);
+
+    my %wts_states_census;
+
+    foreach my $line (@censuswts) {
+        my($st,$wt)    = split(',',$line);
+        $wts_states_census{$st} = $wt;
+    }
+
+    my $conuswts_file = "../weights/".$weights->{"states$n.conus"};
+    open(CONUSWTS,'<',$conuswts_file) or die "Could not open $conuswts_file for reading - $! - exiting";
+    my @conuswts = <CONUSWTS>; chomp @conuswts;
+    close(CONUSWTS);
+
+    my %wts_states_conus;
+    
+    foreach my $line (@conuswts) {
+        my($st,$wt)    = split(',',$line);
+        $wts_states_conus{$st} = $wt;
+    }
+
+    $wts_states_conus{'AK'} = 0;
+    $wts_states_conus{'HI'} = 0;
+
+    my $uswts_file = "../weights/".$weights->{"states$n.us"};
+    open(USWTS,'<',$uswts_file) or die "Could not open $uswts_file for reading - $! - exiting";
+    my @uswts = <USWTS>; chomp @uswts;
+    close(USWTS);
+
+    my %wts_states_us;
+
+    foreach my $line (@uswts) {
+        my($st,$wt)    = split(',',$line);
+        $wts_states_us{$st} = $wt;
+    }
+
+    # --- Calculate the weighted degree days ---
+
+    my %dd_census = map { $_ => 0 } keys %census_regions;
+    my $dd_conus  = 0;
+    my $dd_us     = 0;
+
+    foreach my $st (@us_states) {
+
+        for(my $div=1; $div<10; $div++) {
+            my $states_in_div = $census_regions{$div};
+            my @states_in_div = split(',',$states_in_div);
+            my %states_in_div = map { $_ => 1 } @states_in_div;
+            if(exists $states_in_div{$st}) { $dd_census{$div} += $wts_states_census{$st}*$dd_states{$st}; }
+        }
+
+        $dd_conus += $wts_states_conus{$st}*$dd_states{$st};
+        $dd_us    += $wts_states_us{$st}*$dd_states{$st};
+    }
+
+    # --- Write Census division, CONUS, and US degree days to file ---
+
+    print OUTPUT join(',',"\"".$weights->{"states$n.name"}."\"",$dd_type)."\n";
+
+    for(my $div=1; $div<10; $div++) {
+        print OUTPUT join(',',$census_names{$div},int($dd_census{$div}+0.5))."\n";
+    }
+
+    print OUTPUT join(',','CONUS',int($dd_conus+0.5))."\n";
+    print OUTPUT join(',','US',int($dd_us+0.5))."\n";
+    $n++;
+}
 
 close(OUTPUT);
 
+print "   $output_file written!\n";
 exit 0;
 
