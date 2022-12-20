@@ -194,19 +194,19 @@ else {
 
 if(exists $config->{'output.cooling'}) {
     unless(open(COOLING,'>',$config->{'output.cooling'})) { die "Could not open " . $config->{'output.cooling'} . " for writing - $! - exiting"; }
-    if(exists $config->{'cooling.type'}) { print COOLING join(',','Location',$config->{'cooling.type'."\n"}); }
+    if(exists $config->{'cooling.type'}) { print COOLING join(',','Location',$config->{'cooling.type'}."\n"); }
     else { print COOLING 'Location|Cooling Degree Days'."\n"; }
 }
 
 if(exists $config->{'output.growing'}) {
     unless(open(GROWING,'>',$config->{'output.growing'})) { die "Could not open " . $config->{'output.growing'} . " for writing - $! - exiting"; }
-    if(exists $config->{'growing.type'}) { print GROWING join(',','Location',$config->{'growing.type'."\n"}); }
+    if(exists $config->{'growing.type'}) { print GROWING join(',','Location',$config->{'growing.type'}."\n"); }
     else { print GROWING 'Location|Growing Degree Days'."\n"; }
 }
 
 if(exists $config->{'output.heating'}) {
     unless(open(HEATING,'>',$config->{'output.heating'})) { die "Could not open " . $config->{'output.heating'} . " for writing - $! - exiting"; }
-    if(exists $config->{'heating.type'}) { print HEATING join(',','Location',$config->{'heating.type'."\n"}); }
+    if(exists $config->{'heating.type'}) { print HEATING join(',','Location',$config->{'heating.type'}."\n"); }
     else { print HEATING 'Location|Heating Degree Days'."\n"; }
 }
 
@@ -215,7 +215,7 @@ my $gdd = DegreeDays->new();
 my $hdd = DegreeDays->new();
 if($config->{'cooling.base'}) { $cdd->base($config->{'cooling.base'}); }
 if($config->{'growing.base'}) { $gdd->base($config->{'growing.base'}); }
-if($config->{'growing.ceil'}) { $gdd->base($config->{'growing.ceil'}); }
+if($config->{'growing.ceil'}) { $gdd->ceil($config->{'growing.ceil'}); }
 if($config->{'heating.base'}) { $hdd->base($config->{'heating.base'}); }
 
 LOC: foreach my $loc (@locations) {
@@ -242,17 +242,17 @@ LOC: foreach my $loc (@locations) {
 
 if(exists $config->{'output.cooling'}) {
     close(COOLING);
-    print "   " . $config->{'output.cooling'} . " written!";
+    print "   " . $config->{'output.cooling'} . " written!\n";
 }
 
 if(exists $config->{'output.growing'}) {
     close(GROWING);
-    print "   " . $config->{'output.growing'} . " written!";
+    print "   " . $config->{'output.growing'} . " written!\n";
 }
 
 if(exists $config->{'output.heating'}) {
     close(HEATING);
-    print "   " . $config->{'output.heating'} . " written!";
+    print "   " . $config->{'output.heating'} . " written!\n";
 }
 
 # --- End of script ---
