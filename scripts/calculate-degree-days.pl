@@ -53,7 +53,7 @@ use Getopt::Long;
 use File::Basename qw(fileparse basename);
 use File::Copy qw(copy move);
 use File::Path qw(mkpath);
-use Scalar::Util qw(blessed looks_like_number openhandle);
+use Scalar::Util qw(blessed looks_like_number openhandle reftype);
 use Pod::Usage;
 use Text::ParseWords;
 
@@ -127,159 +127,132 @@ print "Running calculate-degree-days for " . $day->printf("%Y%m%d") . " using pa
 
 # --- Pull information from the configuration file ---
 
-my $config    = Config::Simple->new($config_file)->vars();
+my $config = Config::Simple->new($config_file)->vars();
 foreach my $var (keys %{$config}) { $config->{$var} = parse_param($config->{$var},$day); }
-my($cd_tmax,$cd_tmin,$st_temp,$stations,$cd_output,$st_output);
-if(exists $config->{'input.climdivs_tmax'}) { $cd_tmax   = $config->{'input.climdivs_tmax'}; }
-if(exists $config->{'input.climdivs_tmin'}) { $cd_tmin   = $config->{'input.climdivs_tmin'}; }
-if(exists $config->{'input.cadb'})          { $st_temp   = $config->{'input.cadb'};          }
-if(exists $config->{'input.cadb_stations'}) { $stations  = $config->{'input.cadb_stations'}; }
-if(exists $config->{'output.climdivs'})     { $cd_output = $config->{'output.climdivs'};     }
-if(exists $config->{'output.cadb'})         { $st_output = $config->{'output.cadb'};         }
 
-# --- Get station list ---
+# --- Load locations ---
 
-my(@station_ids);
+my @locations;
 
-if($stations) {
+if(exists $config->{'input.locations'}) {
+    open(LOCATIONS,'<',$config->{'input.locations'}) or die "Could not open " . $config->{'input.locations'} . " for reading - $! - exiting";
+    my @locations_contents = <LOCATIONS>; chomp @locations_contents;
+    close(LOCATIONS);
 
-    if(-s $stations) {
-        open(STATIONS,'<',$stations) or die "Could not open $stations - $! - exiting";
-        my @stations_contents = <STATIONS>; chomp @stations_contents;
-        close(STATIONS);
-
-        foreach my $station (@stations_contents) {
-            $station =~ s/\'//g;
-            my @station_info = Text::ParseWords::parse_line(',', 0, $station);
-            push(@station_ids,$station_info[0]);
-        }
-
-    }
-    else {
-        warn "Cannot load stations list - $stations file does not exist";
+    foreach my $loc (@locations_contents) {
+        $loc =~ s/\'//g;
+        my @loc_info = Text::ParseWords::parse_line(',',0,$loc);
+        push(@locations,$loc_info[0]);
     }
 
 }
-
-# --- Get temperature data ---
-
-my $cd_data = CPC::DailyTemperatures::Climdivs->new();
-my $st_data = CPC::DailyTemperatures::CADB->new();
-$cd_data->set_missing(-9999);
-$st_data->set_missing(-99999);
-if(@station_ids) { $st_data->set_locations(@station_ids); }
-my($climdivs_tmax,$climdivs_tmin,$stations_tmax,$stations_tmin);
-if($cd_tmax) { $climdivs_tmax = $cd_data->get_data($cd_tmax);        }
-if($cd_tmin) { $climdivs_tmin = $cd_data->get_data($cd_tmin);        }
-if($st_temp) { $stations_tmax = $st_data->get_data($st_temp,'tmax');
-               $stations_tmin = $st_data->get_data($st_temp,'tmin'); }
-
-# --- Convert CADB temperatures to Fahrenheit ---
-
-if($st_temp) {
-    foreach my $stn (keys %{$stations_tmax}) { unless($stations_tmax->{$stn} == -999) { $stations_tmax->{$stn} = ($stations_tmax->{$stn}*9/5) + 32; } }
-    foreach my $stn (keys %{$stations_tmin}) { unless($stations_tmin->{$stn} == -999) { $stations_tmin->{$stn} = ($stations_tmin->{$stn}*9/5) + 32; } }
+else {
+    die "No input locations found in $config_file - exiting";
 }
 
-# --- Calculate degree days ---
+if(scalar(@locations) < 1) {
+    die "No locations were found in " . $config->{'input.locations'} . " - exiting";
+}
 
-my $dd = DegreeDays->new();
-my($cd_cdd,$cd_gdd,$cd_hdd);
-my($st_cdd,$st_gdd,$st_hdd);
-my($output_climdivs,$output_stations);
+# --- Load temperature data ---
 
-if($climdivs_tmax and $climdivs_tmin) {
+my($tmax,$tmin);
 
-    foreach my $cd (keys %{$climdivs_tmax}) {
-        my $cdd = $dd->cooling($climdivs_tmax->{$cd},$climdivs_tmin->{$cd});
-        my $gdd = $dd->growing($climdivs_tmax->{$cd},$climdivs_tmin->{$cd});
-        my $hdd = $dd->heating($climdivs_tmax->{$cd},$climdivs_tmin->{$cd});
-        $cd_cdd->{$cd} = $cdd;
-        $cd_gdd->{$cd} = $gdd;
-        $cd_hdd->{$cd} = $hdd;
+if($config->{'input.type'} eq 'climdivs') {
+    unless(-s $config->{'input.tmax'}) { die "No tmax data found in the archive - exiting"; }
+    unless(-s $config->{'input.tmin'}) { die "No tmin data found in the archive - exiting"; }
+    my $cd_temps = CPC::DailyTemperatures::Climdivs->new();
+    $cd_temps->set_missing(-9999);
+    $tmax = $cd_temps->get_data($config->{'input.tmax'});
+    $tmin = $cd_temps->get_data($config->{'input.tmin'});
+    unless(reftype($tmax) eq 'HASH') { die "TMAX data were not loaded - exiting"; }
+    unless(reftype($tmin) eq 'HASH') { die "TMIN data were not loaded - exiting"; }
+}
+elsif($config->{'input.type'} eq 'cadb') {
+    unless(-s $config->{'input.tmax'}) { die "No tmax data found in the archive - exiting"; }
+    unless(-s $config->{'input.tmin'}) { die "No tmin data found in the archive - exiting"; }
+    my $stn_temps = CPC::DailyTemperatures::CADB->new();
+    $stn_temps->set_missing(-99999);
+    $tmax = $stn_temps->get_data($config->{'input.tmax'},'tmax');
+    $tmin = $stn_temps->get_data($config->{'input.tmin'},'tmin');
+    unless(reftype($tmax) eq 'HASH') { die "TMAX data were not loaded - exiting"; }
+    unless(reftype($tmin) eq 'HASH') { die "TMIN data were not loaded - exiting"; }
+
+    # --- Convert temperatures to Fahrenheit ---
+
+    foreach my $loc (keys %$tmax) { unless($tmax->{$loc} == -999) { $tmax->{$loc} = ($tmax->{$loc}*9/5) + 32; } }
+    foreach my $loc (keys %$tmin) { unless($tmin->{$loc} == -999) { $tmin->{$loc} = ($tmin->{$loc}*9/5) + 32; } }
+}
+elsif(exists $config->{'input.type'}) {
+    die "Unknown input type found in $config_file - exiting";
+}
+else {
+    die "No input type found in $config_file - exiting";
+}
+
+# --- Calculate and write degree days to output files ---
+
+if(exists $config->{'output.cooling'}) {
+    unless(open(COOLING,'>',$config->{'output.cooling'})) { die "Could not open " . $config->{'output.cooling'} . " for writing - $! - exiting"; }
+    if(exists $config->{'cooling.type'}) { print COOLING join(',','Location',$config->{'cooling.type'."\n"}); }
+    else { print COOLING 'Location|Cooling Degree Days'."\n"; }
+}
+
+if(exists $config->{'output.growing'}) {
+    unless(open(GROWING,'>',$config->{'output.growing'})) { die "Could not open " . $config->{'output.growing'} . " for writing - $! - exiting"; }
+    if(exists $config->{'growing.type'}) { print GROWING join(',','Location',$config->{'growing.type'."\n"}); }
+    else { print GROWING 'Location|Growing Degree Days'."\n"; }
+}
+
+if(exists $config->{'output.heating'}) {
+    unless(open(HEATING,'>',$config->{'output.heating'})) { die "Could not open " . $config->{'output.heating'} . " for writing - $! - exiting"; }
+    if(exists $config->{'heating.type'}) { print HEATING join(',','Location',$config->{'heating.type'."\n"}); }
+    else { print HEATING 'Location|Heating Degree Days'."\n"; }
+}
+
+my $cdd = DegreeDays->new();
+my $gdd = DegreeDays->new();
+my $hdd = DegreeDays->new();
+if($config->{'cooling.base'}) { $cdd->base($config->{'cooling.base'}); }
+if($config->{'growing.base'}) { $gdd->base($config->{'growing.base'}); }
+if($config->{'growing.ceil'}) { $gdd->base($config->{'growing.ceil'}); }
+if($config->{'heating.base'}) { $hdd->base($config->{'heating.base'}); }
+
+LOC: foreach my $loc (@locations) {
+
+    if(exists $config->{'output.cooling'}) {
+        my $value = -999;
+        if($tmax->{$loc} != -999 and $tmin->{$loc} != -999) { $value = $cdd->cooling($tmax->{$loc},$tmin->{$loc}); }
+        print COOLING join(',',$loc,$value."\n");
     }
 
-    $output_climdivs = 1;
-}
-elsif($climdivs_tmax and not $climdivs_tmin) {
-    warn "No tmin data on climate divisions ingested";
-}
-elsif($climdivs_tmin and not $climdivs_tmax) {
-    warn "No tmax data on climate divisions ingested";
-}
-
-if($stations_tmax and $stations_tmin) {
-
-    foreach my $stn (keys %{$stations_tmax}) {
-        my $cdd = $dd->cooling($stations_tmax->{$stn},$stations_tmin->{$stn});
-        my $gdd = $dd->growing($stations_tmax->{$stn},$stations_tmin->{$stn});
-        my $hdd = $dd->heating($stations_tmax->{$stn},$stations_tmin->{$stn});
-        $st_cdd->{$stn} = $cdd;
-        $st_gdd->{$stn} = $gdd;
-        $st_hdd->{$stn} = $hdd;
+    if(exists $config->{'output.growing'}) {
+        my $value = -999;
+        if($tmax->{$loc} != -999 and $tmin->{$loc} != -999) { $value = $gdd->growing($tmax->{$loc},$tmin->{$loc}); }
+        print GROWING join(',',$loc,$value."\n");
     }
 
-    $output_stations = 1;
-}
-elsif($stations_tmax and not $stations_tmin) {
-    warn "No tmin data from the CADB ingested";
-}
-elsif($stations_tmin and not $stations_tmax) {
-    warn "No tmax data from the CADB ingested";
-}
-
-# --- Write degree days data to files ---
-
-if($output_climdivs) {
-    my $locations  = $cd_data->get_locations();
-    my $output_cdd = join('_',$cd_output,'cdd.txt');
-    my $output_gdd = join('_',$cd_output,'gdd.txt');
-    my $output_hdd = join('_',$cd_output,'hdd.txt');
-    open(CDD,'>',$output_cdd) or die "Could not open $output_cdd for writing - $! - exiting";
-    open(GDD,'>',$output_gdd) or die "Could not open $output_gdd for writing - $! - exiting";
-    open(HDD,'>',$output_hdd) or die "Could not open $output_hdd for writing - $! - exiting";
-    print CDD "Climdiv,Cooling Degree Days\n";
-    print GDD "Climdiv,Growing Degree Days\n";
-    print HDD "Climdiv,Heating Degree Days\n";
-
-    foreach my $location (@{$locations}) {
-        print CDD join(',',$location,$cd_cdd->{$location}."\n");
-        print GDD join(',',$location,$cd_gdd->{$location}."\n");
-        print HDD join(',',$location,$cd_hdd->{$location}."\n");
+    if(exists $config->{'output.heating'}) {
+        my $value = -999;
+        if($tmax->{$loc} != -999 and $tmin->{$loc} != -999) { $value = $hdd->heating($tmax->{$loc},$tmin->{$loc}); }
+        print HEATING join(',',$loc,$value."\n");
     }
+    
+}  # :LOC
 
-    close(CDD);
-    close(GDD);
-    close(HDD);
-    print "   $output_cdd written!\n";
-    print "   $output_gdd written!\n";
-    print "   $output_hdd written!\n";
+if(exists $config->{'output.cooling'}) {
+    close(COOLING);
+    print "   " . $config->{'output.cooling'} . " written!";
 }
 
-if($output_stations) {
-    my $locations  = $st_data->get_locations();
-    my $output_cdd = join('_',$st_output,'cdd.txt');
-    my $output_gdd = join('_',$st_output,'gdd.txt');
-    my $output_hdd = join('_',$st_output,'hdd.txt');
-    open(CDD,'>',$output_cdd) or die "Could not open $output_cdd for writing - $! - exiting";
-    open(GDD,'>',$output_gdd) or die "Could not open $output_gdd for writing - $! - exiting";
-    open(HDD,'>',$output_hdd) or die "Could not open $output_hdd for writing - $! - exiting";
-    print CDD "Station,Cooling Degree Days\n";
-    print GDD "Station,Growing Degree Days\n";
-    print HDD "Station,Heating Degree Days\n";
+if(exists $config->{'output.growing'}) {
+    close(GROWING);
+    print "   " . $config->{'output.growing'} . " written!";
+}
 
-    foreach my $location (@{$locations}) {
-        print CDD join(',',$location,$st_cdd->{$location}."\n");
-        print GDD join(',',$location,$st_gdd->{$location}."\n");
-        print HDD join(',',$location,$st_hdd->{$location}."\n");
-    }
-
-    close(CDD);
-    close(GDD);
-    close(HDD);
-    print "   $output_cdd written!\n";
-    print "   $output_gdd written!\n";
-    print "   $output_hdd written!\n";
+if(exists $config->{'output.heating'}) {
+    close(HEATING);
+    print "   " . $config->{'output.heating'} . " written!";
 }
 
 # --- End of script ---
