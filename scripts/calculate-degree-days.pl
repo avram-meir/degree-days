@@ -193,18 +193,24 @@ else {
 # --- Calculate and write degree days to output files ---
 
 if(exists $config->{'output.cooling'}) {
+    my($output_name,$output_path,$output_suffix) = fileparse($config->{'output.cooling'}, qr/\.[^.]*/);
+    unless(-d $output_path) { mkpath($output_path) or die "Could not create directory $output_path - $! - exiting"; }
     unless(open(COOLING,'>',$config->{'output.cooling'})) { die "Could not open " . $config->{'output.cooling'} . " for writing - $! - exiting"; }
     if(exists $config->{'cooling.type'}) { print COOLING join(',','Location',$config->{'cooling.type'}."\n"); }
     else { print COOLING 'Location|Cooling Degree Days'."\n"; }
 }
 
 if(exists $config->{'output.growing'}) {
+    my($output_name,$output_path,$output_suffix) = fileparse($config->{'output.growing'}, qr/\.[^.]*/);
+    unless(-d $output_path) { mkpath($output_path) or die "Could not create directory $output_path - $! - exiting"; }
     unless(open(GROWING,'>',$config->{'output.growing'})) { die "Could not open " . $config->{'output.growing'} . " for writing - $! - exiting"; }
     if(exists $config->{'growing.type'}) { print GROWING join(',','Location',$config->{'growing.type'}."\n"); }
     else { print GROWING 'Location|Growing Degree Days'."\n"; }
 }
 
 if(exists $config->{'output.heating'}) {
+    my($output_name,$output_path,$output_suffix) = fileparse($config->{'output.heating'}, qr/\.[^.]*/);
+    unless(-d $output_path) { mkpath($output_path) or die "Could not create directory $output_path - $! - exiting"; }
     unless(open(HEATING,'>',$config->{'output.heating'})) { die "Could not open " . $config->{'output.heating'} . " for writing - $! - exiting"; }
     if(exists $config->{'heating.type'}) { print HEATING join(',','Location',$config->{'heating.type'}."\n"); }
     else { print HEATING 'Location|Heating Degree Days'."\n"; }
