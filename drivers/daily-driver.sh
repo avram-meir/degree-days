@@ -197,13 +197,7 @@ for date in "${datelist[@]}" ; do
     fi
 
     if [ $update -eq 1 ] ; then
-        printf "Updating archive for %s\n" $date
-
-#        ***************************************
-#        *                                     *
-#        *   Your amazing stuff happens here   *
-#        *                                     *
-#        ***************************************
+        printf "\n--- Updating archive for %s ---\n" $date
 
         ./update-archives.sh -d $date
 
@@ -261,7 +255,7 @@ if [ $failed -ne 0 ] ; then
         printf "missingdates=(%s)\n" "${baddays[*]}" > $listfile
     fi
 
-    printf "There were errors detected on %d days\n" $failed >&2
+    printf "\nThere were errors detected on %d days\n" $failed >&2
     exit 1
 else
 
@@ -273,7 +267,7 @@ else
 
     fi
 
-    printf "No errors detected\n"
+    printf "\nNo errors detected\n"
 fi
 
 exit 0

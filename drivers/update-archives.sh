@@ -3,7 +3,7 @@
 # --- Usage ---
 
 usage() {
-    printf "\nupdate-archives.sh : A template script to create and update your archives\n\n"
+    printf "\nupdate-archives.sh : Update the daily degree days archives\n\n"
     printf "Usage : %s [options]\n\n" $(basename $0)
     printf "   -d <date>     Date to update in a format understandable by GNU date\n\n"
 }
@@ -35,10 +35,9 @@ if [ $? -ne 0 ] ; then
     exit 1
 fi
 
-# --- Do stuff here ---
+# --- Calculate degree days on climate divisions and stations ---
 
-printf "\nDate received (YYYY/MM/DD): %s\n" `date +%Y/%m/%d --date "${update}"`
-printf "This is a template script, you have to add content to it for it to update your archive\n\n"
+printf "\n1. Calculating degree days on climate divisions and stations\n"
 
-exit 0
+perl ../scripts/calculate-degree-days.pl -c ../config/degree_days.config -d ${update}
 
