@@ -35,9 +35,35 @@ if [ $? -ne 0 ] ; then
     exit 1
 fi
 
-# --- Calculate degree days on climate divisions and stations ---
+YYYYMMDD=$(date +%Y%m%d --date $update)
+YYYY=$(date +%Y --date $update)
+MM=$(date +%m --date $update)
+DD=$(date +%d --date $update)
+
+# --- Update the various archives ---
+
+error=0
 
 printf "\n1. Calculating degree days on climate divisions and stations\n"
 
 perl ../scripts/calculate-degree-days.pl -c ../config/degree_days.config -d ${update}
 
+if [ $? -ne 0 ] ; then
+    error=1
+fi
+
+printf "\n2. Create weighted degree days summaries for states, Census Divisions, US\n";
+
+perl ../scripts/weighted-degree-days.pl -c ../config/weights.config -i $DATA_OUT/observations/land_air/all_ranges/us/degree_days/${YYYY}/${MM}/${DD}/cdd_climdivs_${YYYYMMDD}.txt -o $DATA_OUT/observations/land_air/all_ranges/us/degree_days/${YYYY}/${MM}/${DD}/cdd_weighted_${YYYYMMDD}.txt
+
+if [ $? -ne 0 ] ; then
+    error=1
+fi 
+
+perl ../scripts/weighted-degree-days.pl -c ../config/weights.config -i $DATA_OUT/observations/land_air/all_ranges/us/degree_days/${YYYY}/${MM}/${DD}/hdd_climdivs_${YYYYMMDD}.txt -o $DATA_OUT/observations/land_air/all_ranges/us/degree_days/${YYYY}/${MM}/${DD}/hdd_weighted_${YYYYMMDD}.txt
+
+if [ $? -ne 0 ] ; then
+    error=1
+fi 
+
+exit ${error}
