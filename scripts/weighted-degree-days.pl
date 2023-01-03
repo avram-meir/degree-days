@@ -160,6 +160,25 @@ foreach my $line (@cdwts) {
 
 # --- Get population weighted state degree days ---
 
+my %us_states = qw(
+        AK Alaska           LA Louisiana        OH Ohio
+        AL Alabama          MA Massachusetts    OK Oklahoma
+        AR Arkansas         MD Maryland         OR Oregon
+        AZ Arizona          ME Maine            PA Pennsylvania
+        CA California       MI Michigan         RI Rhode Island
+        CO Colorado         MN Minnesota        SC South Carolina
+        CT Connecticut      MO Missouri         SD South Dakota
+        DE Delaware         MS Mississippi      TN Tennessee
+        FL Florida          MT Montana          TX Texas
+        GA Georgia          NC North Carolina   UT Utah
+        HI Hawaii           ND North Dakota     VA Virginia
+        IA Iowa             NE Nebraska         VT Vermont
+        ID Idaho            NH New Hampshire    WA Washington
+        IL Illinois         NJ New Jersey       WI Wisconsin
+        IN Indiana          NM New Mexico       WV West Virginia
+        KS Kansas           NV Nevada           WY Wyoming
+        KY Kentucky         NY New York
+);
 my @us_states   = qw(AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY);
 my %dd_states   = map { $_ => 0 } @us_states;
 
@@ -175,7 +194,7 @@ open(OUTPUT,'>',$output_file) or die "Could not open $output_file for writing - 
 print OUTPUT join(',','Population Weighted States',$dd_type)."\n";
 
 foreach my $st (@us_states) {
-    print OUTPUT join(',',$st,int($dd_states{$st}+0.5))."\n";
+    print OUTPUT join(',',uc($us_states{st}),int($dd_states{$st}+0.5))."\n";
 }
 
 # --- Get Census division, CONUS, and US weighted degree days ---
